@@ -17,10 +17,11 @@
         {{ site_name }}<span class="text-accent">.</span>
       </a>
       {% with name=request.resolver_match.url_name %}
-      <nav class="order-last flex w-full gap-5 text-sm font-medium text-muted sm:order-none sm:w-auto" aria-label="Main">
+      <nav class="order-last flex w-full gap-5 overflow-x-auto text-sm font-medium text-muted sm:order-none sm:w-auto" aria-label="Main">
         <a href="{% url 'articles:home' %}" class="hover:text-ink {% if name == 'home' %}text-ink{% endif %}">Latest</a>
         <a href="{% url 'articles:tags' %}" class="hover:text-ink {% if name == 'tags' or name == 'tag' %}text-ink{% endif %}">Tags</a>
         <a href="{% url 'articles:organizations' %}" class="hover:text-ink {% if name == 'organizations' or name == 'organization' %}text-ink{% endif %}">Organizations</a>
+        <a href="{% url 'articles:publishers' %}" class="hover:text-ink {% if name == 'publishers' or name == 'publisher' %}text-ink{% endif %}">Publishers</a>
         <a href="{% url 'articles:countries' %}" class="hover:text-ink {% if name == 'countries' or name == 'country' %}text-ink{% endif %}">Countries</a>
       </nav>
       {% endwith %}
@@ -41,6 +42,7 @@
               <p class="border-b border-line px-4 py-2 text-xs text-muted">Logged in as <strong class="text-ink">{{ user.get_username }}</strong></p>
               <a class="block px-4 py-2 hover:bg-paper" href="{% url 'articles:tag_add' %}">Add a tag</a>
               <a class="block px-4 py-2 hover:bg-paper" href="{% url 'articles:organization_add' %}">Add an organization</a>
+              <a class="block px-4 py-2 hover:bg-paper" href="{% url 'articles:publisher_add' %}">Add a publisher</a>
               {% if user.is_staff %}
                 <a class="block px-4 py-2 hover:bg-paper" href="{% url 'social:settings' %}">Settings</a>
                 <a class="block px-4 py-2 hover:bg-paper" href="{% url 'admin:index' %}">Admin</a>

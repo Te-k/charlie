@@ -7,7 +7,7 @@
     {% csrf_token %}
     {% for field in form %}{% include "articles/_form_field.html" %}{% endfor %}
     <div class="flex gap-3">
-      <button type="submit" class="btn-primary">Add</button>
+      <button type="submit" class="btn-primary">{{ submit_label|default:"Add" }}</button>
       <a href="{{ cancel_url }}" class="btn-ghost">Cancel</a>
     </div>
   </form>

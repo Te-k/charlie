@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.feedgenerator import Rss201rev2Feed
 
-from .models import Article, Country, Organization, Tag, site_name
+from .models import Article, Country, Organization, Publisher, Tag, site_name
 
 FEED_SIZE = 50
 
@@ -97,6 +97,10 @@ class TagFeed(_FilteredFeed):
 
 class OrganizationFeed(_FilteredFeed):
     model, relation, label = Organization, "organizations", "organization"
+
+
+class PublisherFeed(_FilteredFeed):
+    model, relation, label = Publisher, "publisher", "publisher"
 
 
 class CountryFeed(_FilteredFeed):

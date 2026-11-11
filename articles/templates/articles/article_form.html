@@ -21,6 +21,9 @@
       {% include "articles/_form_field.html" with field=form.title %}
       {% include "articles/_form_field.html" with field=form.description %}
       {% include "articles/_form_field.html" with field=form.image_url %}
+      {% include "articles/_form_field.html" with field=form.publisher %}
+      {{ form.publisher_name }}
+      {% if new_publisher %}<p class="-mt-3 mb-5 text-xs text-muted">No publisher matches this URL yet. Saving creates <strong class="text-ink">{{ new_publisher }}</strong>.</p>{% endif %}
     </section>
 
     <aside class="space-y-6">

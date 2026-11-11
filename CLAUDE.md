@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Charlie is a Django app for keeping track of interesting articles. Each article has a URL, title,
-description and photo, and can be linked to tags, countries and organizations. Anyone can read the
+description and photo, a publisher, and can be linked to tags, countries and organizations. Anyone can read the
 site and subscribe by RSS. Logged-in users add, edit and delete content. New articles can be posted
 to Mastodon and Bluesky. The user-facing description is in `README.md`.
 
@@ -38,14 +38,14 @@ standalone Tailwind v4 CLI.
 - `charlie/`: project settings and root URLs. Login and logout use Django's auth views at `/login/`
   and `/logout/`.
 - `articles/`: the main app.
-  - `models.py`: `Article`, plus `Tag` and `Organization` (both use `SluggedModel`, which builds a
-    unique slug automatically), `Country` (ISO code, `flag` emoji property), and `SiteSettings`
+  - `models.py`: `Article`, plus `Tag`, `Organization` and `Publisher` (all use `SluggedModel`,
+    which builds a unique slug automatically), `Country` (ISO code, `flag` emoji property), and `SiteSettings`
     (a single row holding the website name; read it with `site_name()`).
   - `metadata.py`: fetches a page's title, description and image (OpenGraph, then Twitter card,
     then `<title>` / meta description), and downloads images (`fetch_image`).
   - `views.py`: list pages, detail page, the two-step add flow, edit, delete, and adding tags and
     organizations.
-  - `feeds.py`: RSS feeds (`/feed/`, plus one per tag, organization and country).
+  - `feeds.py`: RSS feeds (`/feed/`, plus one per tag, organization, publisher and country).
   - `context_processors.py`: puts `site_name` into every template.
   - `templatetags/articles_tags.py`: `day_label` and `is_relative_day`, used to group the home page
     by day.
@@ -77,6 +77,21 @@ standalone Tailwind v4 CLI.
 
 `/articles/add/?url=…` skips step 1. On the edit form, "Fetch details again" also posts
 `action=fetch`; it overwrites the title, description and image in the form without saving.
+
+### Publishers (found from the article's domain)
+- `Publisher` has `website` and an optional `alternative_website`. `save()` stores their normalised
+  domains (lowercase, no `www.`, see `url_domain()`) in `domain` / `alternative_domain` for lookups.
+- `Publisher.objects.for_url(url)` matches the URL's domain against both fields. Subdomains match
+  (`blog.example.com` belongs to `example.com`) and the most specific domain wins.
+- `Article.save()` sets the publisher when it is empty, creating one with
+  `get_or_create_for_url()`. The new publisher is named from `article.publisher_name` (the page's
+  `og:site_name`, carried through the review step in a hidden form field), else the domain.
+- The review step pre-selects the matching publisher, or tells the user that a new one will be
+  created (`new_publisher` in the context). Nothing is created before saving.
+- On save, if the URL changed but the publisher field didn't, the publisher is found again.
+- `PublisherForm` refuses a domain that already belongs to another publisher, so lookups stay
+  unambiguous. Editing a publisher's websites does not relink existing articles.
+- Migration `0006` linked articles that existed before publishers were added.
 
 ### Posting to Mastodon / Bluesky
 - `social.forms.add_publish_fields()` adds `post_mastodon` / `post_bluesky` checkboxes, **only
@@ -110,7 +125,8 @@ addresses. Every outgoing request for a user-supplied URL (pages, images) must g
 
 ### Permissions
 - Reading pages and feeds: anyone.
-- Adding, editing and deleting articles, and adding tags and organizations: any logged-in user
+- Adding, editing and deleting articles, adding tags and organizations, and adding and editing
+  publishers: any logged-in user
   (`LoginRequiredMixin`). Any user can edit any article, not just their own.
 - `/settings/` (website name, social accounts): `is_staff` only.
 - There is deliberately **no registration**. Users are created with `createsuperuser` or in
@@ -118,7 +134,7 @@ addresses. Every outgoing request for a user-supplied URL (pages, images) must g
 
 ## Conventions
 
-- **Views**: class-based. List pages filtered by tag, organization or country share
+- **Views**: class-based. List pages filtered by tag, organization, publisher or country share
   `FilteredArticleListView` (`model`, `relation`, `kind`, `lookup`); feeds mirror this with
   `_FilteredFeed`. Countries are looked up by lowercase ISO code in URLs and stored uppercase.
 - **Single-row settings** (`SiteSettings`, `SocialSettings`): `save()` forces `pk=1`; read with

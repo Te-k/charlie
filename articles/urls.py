@@ -27,6 +27,13 @@ urlpatterns = [
         r"^companies/(?P<rest>.*)$",
         RedirectView.as_view(url="/organizations/%(rest)s", permanent=True, query_string=True),
     ),
+    path("publishers/", views.PublisherIndexView.as_view(), name="publishers"),
+    path("publishers/add/", views.PublisherCreateView.as_view(), name="publisher_add"),
+    path("publishers/<slug:slug>/", views.PublisherArticlesView.as_view(), name="publisher"),
+    path(
+        "publishers/<slug:slug>/edit/", views.PublisherUpdateView.as_view(), name="publisher_edit"
+    ),
+    path("publishers/<slug:slug>/feed/", feeds.PublisherFeed(), name="publisher_feed"),
     path("countries/", views.CountryIndexView.as_view(), name="countries"),
     path("countries/<str:code>/", views.CountryArticlesView.as_view(), name="country"),
     path("countries/<str:code>/feed/", feeds.CountryFeed(), name="country_feed"),

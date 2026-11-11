@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Article, Country, Organization, Tag
+from .models import Article, Country, Organization, Publisher, Tag
 
 
 @admin.register(Tag)
@@ -17,6 +17,13 @@ class OrganizationAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ["name"]}
 
 
+@admin.register(Publisher)
+class PublisherAdmin(admin.ModelAdmin):
+    list_display = ["name", "domain", "alternative_domain"]
+    search_fields = ["name", "domain", "alternative_domain"]
+    prepopulated_fields = {"slug": ["name"]}
+
+
 @admin.register(Country)
 class CountryAdmin(admin.ModelAdmin):
     list_display = ["name", "code"]
@@ -25,8 +32,9 @@ class CountryAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ["display_title", "url", "added_by", "created_at"]
-    list_filter = ["tags", "organizations", "created_at"]
+    list_display = ["display_title", "publisher", "added_by", "created_at"]
+    list_filter = ["publisher", "tags", "organizations", "created_at"]
     search_fields = ["title", "url", "description"]
     filter_horizontal = ["tags", "countries", "organizations"]
     readonly_fields = ["created_at", "updated_at"]
+    autocomplete_fields = ["publisher"]

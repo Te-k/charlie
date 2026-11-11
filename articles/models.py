@@ -2,13 +2,14 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.text import slugify
 
 
 def unique_slug(instance, value, max_length=100):
     """Build a slug from `value` that is unique for the instance's model."""
-    base = slugify(value)[:max_length] or "item"
+    base = slugify(value.replace(".", " "))[:max_length] or "item"
     slug = base
     model = type(instance)
     n = 2
@@ -54,6 +55,85 @@ class Organization(SluggedModel):
         return reverse("articles:organization", args=[self.slug])
 
 
+def url_domain(url):
+    """Host name of `url`, lowercase and without a leading "www."."""
+    host = (urlparse(url or "").hostname or "").rstrip(".")
+    return host.removeprefix("www.")
+
+
+class PublisherQuerySet(models.QuerySet):
+    def for_url(self, url):
+        """The publisher whose website or alternative website matches the URL's domain.
+
+        Subdomains match too (news.example.com belongs to example.com); the most
+        specific domain wins.
+        """
+        host = url_domain(url)
+        if not host:
+            return None
+        parts = host.split(".")
+        # example.com, then its parents, but never a bare top-level domain.
+        candidates = [".".join(parts[i:]) for i in range(max(len(parts) - 1, 1))]
+        matches = self.filter(Q(domain__in=candidates) | Q(alternative_domain__in=candidates))
+
+        def specificity(publisher):
+            return max(
+                len(d) for d in (publisher.domain, publisher.alternative_domain) if d in candidates
+            )
+
+        return max(matches, key=specificity, default=None)
+
+    def get_or_create_for_url(self, url, name=""):
+        """Find the publisher for `url`, or create one named `name` (or after the domain)."""
+        publisher = self.for_url(url)
+        if publisher or not url_domain(url):
+            return publisher
+        parsed = urlparse(url)
+        host = url_domain(url)
+        publisher = self.model(
+            name=self._free_name(" ".join(name.split()) or host, host),
+            website=f"{parsed.scheme or 'https'}://{parsed.hostname}/",
+        )
+        publisher.save()
+        return publisher
+
+    def _free_name(self, name, host):
+        max_length = self.model._meta.get_field("name").max_length
+        candidates = [name, f"{name} ({host})"]
+        candidates += [f"{name} ({host}) {n}" for n in range(2, 100)]
+        for candidate in candidates:
+            candidate = candidate[:max_length]
+            if not self.filter(name__iexact=candidate).exists():
+                return candidate
+        return host[:max_length]
+
+
+class Publisher(SluggedModel):
+    """Who published an article: found automatically from the article's domain."""
+
+    description = models.TextField(blank=True)
+    website = models.URLField(help_text="Articles on this domain are linked to this publisher.")
+    alternative_website = models.URLField(
+        blank=True, help_text="Another domain used by this publisher, if any."
+    )
+    # Normalised domains of the two websites, kept in sync by save() for lookups.
+    domain = models.CharField(max_length=255, editable=False, db_index=True)
+    alternative_domain = models.CharField(max_length=255, editable=False, blank=True, db_index=True)
+
+    objects = PublisherQuerySet.as_manager()
+
+    class Meta(SluggedModel.Meta):
+        pass
+
+    def save(self, *args, **kwargs):
+        self.domain = url_domain(self.website)
+        self.alternative_domain = url_domain(self.alternative_website)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("articles:publisher", args=[self.slug])
+
+
 class Country(models.Model):
     """ISO 3166-1 countries, pre-populated by a data migration."""
 
@@ -78,7 +158,7 @@ class Country(models.Model):
 
 class ArticleQuerySet(models.QuerySet):
     def with_relations(self):
-        return self.select_related("added_by").prefetch_related(
+        return self.select_related("added_by", "publisher").prefetch_related(
             "tags", "countries", "organizations"
         )
 
@@ -88,6 +168,14 @@ class Article(models.Model):
     title = models.CharField(max_length=500, blank=True)
     description = models.TextField(blank=True)
     image_url = models.URLField(max_length=2000, blank=True)
+    publisher = models.ForeignKey(
+        Publisher,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="articles",
+        help_text="Leave empty to find it from the URL.",
+    )
     tags = models.ManyToManyField(Tag, blank=True, related_name="articles")
     countries = models.ManyToManyField(Country, blank=True, related_name="articles")
     organizations = models.ManyToManyField(Organization, blank=True, related_name="articles")
@@ -109,6 +197,14 @@ class Article(models.Model):
     def __str__(self):
         return self.display_title
 
+    def save(self, *args, **kwargs):
+        if not self.publisher_id and self.url:
+            # `publisher_name` (e.g. the page's og:site_name) names a new publisher.
+            self.publisher = Publisher.objects.get_or_create_for_url(
+                self.url, name=getattr(self, "publisher_name", "")
+            )
+        super().save(*args, **kwargs)
+
     def get_absolute_url(self):
         return reverse("articles:article", args=[self.pk])
 
@@ -118,8 +214,7 @@ class Article(models.Model):
 
     @property
     def domain(self):
-        host = urlparse(self.url).hostname or ""
-        return host.removeprefix("www.")
+        return url_domain(self.url)
 
 
 class SiteSettings(models.Model):

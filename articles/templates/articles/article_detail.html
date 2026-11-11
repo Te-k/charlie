@@ -4,7 +4,7 @@
 {% block content %}
 <article class="mx-auto max-w-3xl">
   <a href="{% url 'articles:home' %}" class="text-sm text-muted hover:text-ink">← All articles</a>
-  <p class="eyebrow mt-6 mb-3">{{ article.domain }}</p>
+  <p class="eyebrow mt-6 mb-3">{% if article.publisher %}<a href="{{ article.publisher.get_absolute_url }}" class="hover:text-ink">{{ article.publisher.name }}</a>{% else %}{{ article.domain }}{% endif %}</p>
   <h1 class="font-serif text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">{{ article.display_title }}</h1>
   <p class="mt-4 text-sm text-muted">
     Added {{ article.created_at|date:"F j, Y \a\t H:i" }}{% if article.added_by %} by {{ article.added_by.get_username }}{% endif %}

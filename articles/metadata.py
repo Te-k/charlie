@@ -54,7 +54,14 @@ def parse_metadata(html, base_url):
         if urlparse(image).scheme not in ("http", "https"):
             image = ""
 
-    return {"title": title, "description": description, "image_url": image}
+    site_name = _meta(soup, "og:site_name", "application-name")
+
+    return {
+        "title": title,
+        "description": description,
+        "image_url": image,
+        "site_name": site_name,
+    }
 
 
 MAX_REDIRECTS = 5

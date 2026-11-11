@@ -6,12 +6,20 @@
 <header class="mb-10 flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-6">
   <div>
     {% if filter_object %}
-      <p class="eyebrow mb-2">{% if filter_kind == "tag" %}Tag{% elif filter_kind == "country" %}Country{% else %}Organization{% endif %}</p>
+      <p class="eyebrow mb-2">{% if filter_kind == "tag" %}Tag{% elif filter_kind == "country" %}Country{% elif filter_kind == "publisher" %}Publisher{% else %}Organization{% endif %}</p>
       <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">
         {% if filter_kind == "tag" %}<span class="text-accent">#</span>{{ filter_object.name }}
         {% elif filter_kind == "country" %}{{ filter_object.flag }} {{ filter_object.name }}
         {% else %}{{ filter_object.name }}{% endif %}
       </h1>
+      {% if filter_kind == "publisher" %}
+        {% if filter_object.description %}<p class="mt-3 max-w-2xl text-muted">{{ filter_object.description|linebreaksbr }}</p>{% endif %}
+        <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+          <a href="{{ filter_object.website }}" rel="noopener noreferrer" class="prose-link">{{ filter_object.domain }}</a>
+          {% if filter_object.alternative_website %}<a href="{{ filter_object.alternative_website }}" rel="noopener noreferrer" class="prose-link">{{ filter_object.alternative_domain }}</a>{% endif %}
+          {% if user.is_authenticated %}<a href="{% url 'articles:publisher_edit' filter_object.slug %}" class="hover:text-ink">Edit publisher</a>{% endif %}
+        </p>
+      {% endif %}
       {% if filter_kind == "organization" and filter_object.website %}
         <a href="{{ filter_object.website }}" rel="noopener noreferrer" class="prose-link mt-2 inline-block text-sm text-muted">{{ filter_object.website }}</a>
       {% endif %}

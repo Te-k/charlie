@@ -19,8 +19,8 @@ from social.models import SocialSettings
 from social.views import publish_with_messages
 
 from . import metadata
-from .forms import ArticleForm, ArticleUrlForm, OrganizationForm, TagForm
-from .models import Article, Country, Organization, Tag
+from .forms import ArticleForm, ArticleUrlForm, OrganizationForm, PublisherForm, TagForm
+from .models import Article, Country, Organization, Publisher, Tag, url_domain
 
 
 class ArticleListView(ListView):
@@ -35,7 +35,7 @@ class ArticleListView(ListView):
 
 
 class FilteredArticleListView(ArticleListView):
-    """Articles linked to a tag, a country or an organization."""
+    """Articles linked to a tag, a country, an organization or a publisher."""
 
     model = None
     lookup = "slug"
@@ -68,12 +68,16 @@ class OrganizationArticlesView(FilteredArticleListView):
     model, relation, kind = Organization, "organizations", "organization"
 
 
+class PublisherArticlesView(FilteredArticleListView):
+    model, relation, kind = Publisher, "publisher", "publisher"
+
+
 class CountryArticlesView(FilteredArticleListView):
     model, relation, kind, lookup = Country, "countries", "country", "code"
 
 
 class IndexView(ListView):
-    """List of tags / organizations / countries with their article counts."""
+    """List of tags / organizations / publishers / countries with their article counts."""
 
     template_name = "articles/index_list.html"
     context_object_name = "items"
@@ -96,6 +100,10 @@ class TagIndexView(IndexView):
 
 class OrganizationIndexView(IndexView):
     model, title, add_url = Organization, "Organizations", reverse_lazy("articles:organization_add")
+
+
+class PublisherIndexView(IndexView):
+    model, title, add_url = Publisher, "Publishers", reverse_lazy("articles:publisher_add")
 
 
 class CountryIndexView(IndexView):
@@ -138,6 +146,11 @@ class ArticleFormMixin(LoginRequiredMixin):
                 max_length = Article._meta.get_field(field).max_length
                 data[field] = value[:max_length] if max_length else value
                 found = True
+        # Find the publisher again: the URL may have changed.
+        url = data.get("url", "").strip()
+        publisher = Publisher.objects.for_url(url)
+        data["publisher"] = str(publisher.pk) if publisher else ""
+        data["publisher_name"] = (meta.get("site_name") or "")[:100]
         if found:
             messages.info(
                 self.request,
@@ -152,6 +165,17 @@ class ArticleFormMixin(LoginRequiredMixin):
         self.extend_form(form)
         return self.render_to_response(self.get_context_data(form=form, fetched=True))
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = context["form"]
+        # Tell the user when saving will create a new publisher.
+        if form.is_bound and not form["publisher"].value():
+            url = form["url"].value() or ""
+            domain = url_domain(url)
+            if domain and not Publisher.objects.for_url(url):
+                context["new_publisher"] = form["publisher_name"].value() or domain
+        return context
+
     def extend_form(self, form):
         """Hook to add extra fields to the article form."""
 
@@ -165,6 +189,9 @@ class ArticleFormMixin(LoginRequiredMixin):
 
     def form_valid(self, form):
         article = form.save(commit=False)
+        if "url" in form.changed_data and "publisher" not in form.changed_data:
+            article.publisher = None  # the URL changed: find the publisher again
+        article.publisher_name = form.cleaned_data.get("publisher_name", "")
         if not article.added_by_id:
             article.added_by = self.request.user
         article.save()
@@ -240,16 +267,23 @@ class ArticleDeleteView(LoginRequiredMixin, DeleteView):
         return super().form_valid(form)
 
 
-class SimpleCreateView(LoginRequiredMixin, CreateView):
+class SimpleFormMixin(LoginRequiredMixin):
     template_name = "articles/simple_form.html"
     title = ""
+    submit_label = "Add"
+
+    def get_cancel_url(self):
+        return self.cancel_url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = self.title
-        context["cancel_url"] = self.cancel_url
+        context["submit_label"] = self.submit_label
+        context["cancel_url"] = self.get_cancel_url()
         return context
 
+
+class SimpleCreateView(SimpleFormMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, f"“{self.object}” added.")
@@ -264,3 +298,20 @@ class TagCreateView(SimpleCreateView):
 class OrganizationCreateView(SimpleCreateView):
     model, form_class, title = Organization, OrganizationForm, "Add an organization"
     cancel_url = reverse_lazy("articles:organizations")
+
+
+class PublisherCreateView(SimpleCreateView):
+    model, form_class, title = Publisher, PublisherForm, "Add a publisher"
+    cancel_url = reverse_lazy("articles:publishers")
+
+
+class PublisherUpdateView(SimpleFormMixin, UpdateView):
+    model, form_class, title, submit_label = Publisher, PublisherForm, "Edit publisher", "Save"
+
+    def get_cancel_url(self):
+        return self.object.get_absolute_url()
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f"“{self.object}” saved.")
+        return response

@@ -23,7 +23,10 @@ class ParseMetadataTests(SimpleTestCase):
 
     def test_falls_back_to_title_tag(self):
         meta = parse_metadata("<title> Hello\n world </title>", "https://example.com/")
-        self.assertEqual(meta, {"title": "Hello world", "description": "", "image_url": ""})
+        self.assertEqual(
+            meta,
+            {"title": "Hello world", "description": "", "image_url": "", "site_name": ""},
+        )
 
     def test_rejects_non_http_images(self):
         html = '<meta property="og:image" content="javascript:alert(1)">'

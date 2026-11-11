@@ -3,14 +3,16 @@
 A small Django + [Tailwind CSS](https://tailwindcss.com/) app to keep track of interesting articles.
 
 - Articles have a URL, title, description, photo, tags, and optionally countries and organizations.
+- Each article is linked to its publisher, found from the URL's domain. Publishers are created
+  automatically and can be given a description and an alternative website.
 - Adding an article takes two steps: paste the URL, and the app fetches the title, description and photo
   (OpenGraph / Twitter card / `<title>` / meta description); then check and edit them before saving.
   `/articles/add/?url=…` goes straight to the second step (handy for a bookmarklet).
 - Staff users can change the website name at `/settings/` (shown in the header, browser tabs and RSS feeds).
 - New articles can be posted automatically on Mastodon and Bluesky. Staff users set up the accounts
   and the message formats at `/settings/`. Articles can also be posted later from their page.
-- The home page lists articles from newest to oldest, 20 per page. There are pages per tag, organization and country.
-- RSS feeds: `/feed/` (all articles), `/tags/<slug>/feed/`, `/organizations/<slug>/feed/`, `/countries/<code>/feed/`.
+- The home page lists articles from newest to oldest, 20 per page. There are pages per tag, organization, publisher and country.
+- RSS feeds: `/feed/` (all articles), `/tags/<slug>/feed/`, `/organizations/<slug>/feed/`, `/publishers/<slug>/feed/`, `/countries/<code>/feed/`.
 - Anyone can read. Adding articles, tags and organizations needs a login. There is no registration page:
   you create users from the command line or in the Django admin.
 
