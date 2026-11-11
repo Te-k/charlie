@@ -7,7 +7,7 @@
         <li class="flex flex-wrap items-baseline gap-x-2">
           <span class="font-semibold">{{ post.get_network_display }}</span>
           {% if post.url %}<a href="{{ post.url }}" rel="noopener noreferrer" target="_blank" class="prose-link break-all">{{ post.url }}</a>{% endif %}
-          <span class="text-xs text-muted">{{ post.created_at|date:"M j, Y H:i" }}{% if post.posted_by %} · {{ post.posted_by.get_username }}{% endif %}</span>
+          <span class="text-xs text-muted">{{ post.created_at|date:"M j, Y H:i" }}</span>
         </li>
       {% endfor %}
     </ul>

@@ -226,6 +226,23 @@ class ViewTests(TestCase):
             response = self.client.get(old)
             self.assertRedirects(response, new, status_code=301, fetch_redirect_response=False)
 
+    def test_detail_page_archive_links(self):
+        article = Article.objects.create(url="https://example.com/a?b=1", title="A")
+        response = self.client.get(article.get_absolute_url())
+        self.assertContains(
+            response, 'href="https://web.archive.org/web/https://example.com/a?b=1"'
+        )
+        self.assertContains(response, 'href="https://archive.li/https://example.com/a?b=1"')
+
+    def test_who_added_an_article_is_never_shown(self):
+        article = Article.objects.create(url="https://example.com/a", added_by=self.user)
+        for url in (
+            reverse("articles:home"),
+            article.get_absolute_url(),
+            reverse("articles:feed"),
+        ):
+            self.assertNotContains(self.client.get(url), "alice", msg_prefix=url)
+
     def test_login_page(self):
         self.assertEqual(self.client.get(reverse("login")).status_code, 200)
         response = self.client.post(reverse("login"), {"username": "alice", "password": "pw"})

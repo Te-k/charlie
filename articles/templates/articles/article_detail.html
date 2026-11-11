@@ -7,7 +7,7 @@
   <p class="eyebrow mt-6 mb-3">{% if article.publisher %}<a href="{{ article.publisher.get_absolute_url }}" class="hover:text-ink">{{ article.publisher.name }}</a>{% else %}{{ article.domain }}{% endif %}</p>
   <h1 class="font-serif text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">{{ article.display_title }}</h1>
   <p class="mt-4 text-sm text-muted">
-    Added {{ article.created_at|date:"F j, Y \a\t H:i" }}{% if article.added_by %} by {{ article.added_by.get_username }}{% endif %}
+    Added {{ article.created_at|date:"F j, Y \a\t H:i" }}
   </p>
 
   {% if article.image_url %}
@@ -23,6 +23,16 @@
 
   <div class="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
     <a href="{{ article.url }}" rel="noopener noreferrer" target="_blank" class="btn-primary">Read the article <svg class="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>
+    <details class="group relative">
+      <summary class="btn-secondary list-none [&::-webkit-details-marker]:hidden">
+        Archive
+        <svg class="size-3 transition group-open:rotate-180" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.5 2 4.5h8z"/></svg>
+      </summary>
+      <div class="absolute right-0 z-10 mt-2 w-48 sm:right-auto sm:left-0 overflow-hidden rounded-xl border border-line bg-surface py-1 text-sm shadow-lg">
+        <a class="block px-4 py-2 hover:bg-paper" href="https://web.archive.org/web/{{ article.url }}" rel="noopener noreferrer" target="_blank">Wayback Machine</a>
+        <a class="block px-4 py-2 hover:bg-paper" href="https://archive.li/{{ article.url }}" rel="noopener noreferrer" target="_blank">archive.li</a>
+      </div>
+    </details>
     {% if user.is_authenticated %}
       <a href="{% url 'articles:article_edit' article.pk %}" class="btn-secondary">Edit</a>
       <a href="{% url 'articles:article_delete' article.pk %}" class="btn-ghost hover:!text-red-600">Delete</a>

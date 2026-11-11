@@ -158,7 +158,7 @@ class Country(models.Model):
 
 class ArticleQuerySet(models.QuerySet):
     def with_relations(self):
-        return self.select_related("added_by", "publisher").prefetch_related(
+        return self.select_related("publisher").prefetch_related(
             "tags", "countries", "organizations"
         )
 

@@ -129,6 +129,8 @@ addresses. Every outgoing request for a user-supplied URL (pages, images) must g
   publishers: any logged-in user
   (`LoginRequiredMixin`). Any user can edit any article, not just their own.
 - `/settings/` (website name, social accounts): `is_staff` only.
+- The site never shows **who added an article** or who posted it to social networks.
+  `Article.added_by` and `SocialPost.posted_by` are still recorded, and visible only in the admin.
 - There is deliberately **no registration**. Users are created with `createsuperuser` or in
   `/admin/`. Don't add sign-up pages.
 
