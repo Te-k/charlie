@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<header class="mb-8 flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-6">
+  <div>
+    <p class="eyebrow mb-2">Browse</p>
+    <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">{{ title }}</h1>
+  </div>
+  <div class="flex w-full gap-3 sm:w-auto">
+    {% if items|length > 12 %}
+      <input type="search" placeholder="Filter {{ title|lower }}…" aria-label="Filter {{ title|lower }}" class="input sm:w-56" data-filter>
+    {% endif %}
+    {% if add_url and user.is_authenticated %}<a href="{{ add_url }}" class="btn-primary">+ Add</a>{% endif %}
+  </div>
+</header>
+{% if items %}
+<ul class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+  {% for item in items %}
+    <li data-name="{{ item.name|lower }}">
+      <a href="{{ item.get_absolute_url }}"
+         class="flex items-center gap-3 rounded-xl border border-line px-4 py-3 transition hover:border-accent hover:bg-surface {% if item.article_count %}bg-surface{% else %}text-muted{% endif %}">
+        {% if item.flag %}<span class="text-xl leading-none">{{ item.flag }}</span>{% elif item.website is not None %}<span class="grid size-7 place-items-center rounded-md bg-line text-xs font-bold text-ink">{{ item.name|slice:":1"|upper }}</span>{% else %}<span class="font-serif text-lg text-accent">#</span>{% endif %}
+        <span class="min-w-0 flex-1 truncate font-medium">{{ item.name }}</span>
+        <span class="rounded-full px-2 py-0.5 text-xs tabular-nums {% if item.article_count %}bg-accent-soft font-semibold text-accent{% else %}text-muted{% endif %}">{{ item.article_count }}</span>
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="rounded-2xl border border-dashed border-line px-6 py-16 text-center text-muted">Nothing here yet.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-sm pt-6">
+  <h1 class="mb-6 text-center font-serif text-3xl font-bold">Welcome back</h1>
+  <form method="post" class="card">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="error mb-4 mt-0">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+    <div class="field">
+      <label for="id_username">Username</label>
+      <input id="id_username" type="text" name="username" autocomplete="username" required autofocus
+             value="{{ form.username.value|default_if_none:'' }}" {% if form.errors %}aria-invalid="true"{% endif %}>
+    </div>
+    <div class="field">
+      <label for="id_password">Password</label>
+      <input id="id_password" type="password" name="password" autocomplete="current-password" required
+             {% if form.errors %}aria-invalid="true"{% endif %}>
+    </div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn-primary w-full">Log in</button>
+  </form>
+  <p class="mt-4 text-center text-xs text-muted">Accounts are created by the site administrator.</p>
+</div>
+{% endblock %}

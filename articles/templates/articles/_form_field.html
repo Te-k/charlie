@@ -1,0 +1,18 @@
+{% if field.is_hidden %}{{ field }}{% elif field.widget_type == "checkbox" %}
+<div class="field">
+  <label class="!mb-0 flex cursor-pointer items-start gap-3 !font-normal">
+    <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="mt-0.5" {% if field.value %}checked{% endif %}>
+    <span>
+      <span class="font-medium">{{ field.label }}</span>
+      {% if field.help_text %}<span class="help !mt-0.5">{{ field.help_text }}</span>{% endif %}
+    </span>
+  </label>
+  {% for error in field.errors %}<span class="error">{{ error }}</span>{% endfor %}
+</div>
+{% else %}
+<div class="field">
+  <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-accent">*</span>{% endif %}</label>
+  {{ field }}
+  {% for error in field.errors %}<span class="error">{{ error }}</span>{% empty %}{% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}{% endfor %}
+</div>
+{% endif %}

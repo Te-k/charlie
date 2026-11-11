@@ -1,0 +1,87 @@
+/* Source stylesheet. Build with:  tailwindcss -i assets/tailwind.css -o articles/static/articles/app.css --minify */
+@import "tailwindcss" source(none);
+@source "../templates";
+@source "../articles";
+@source "../social";
+
+:root {
+  --paper: #f8f6f1;
+  --surface: #ffffff;
+  --ink: #1c1917;
+  --muted: #6f6a64;
+  --line: #e5e1d8;
+  --accent: #c2410c;
+  --accent-ink: #ffffff;
+  --accent-soft: #fbeee6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141210;
+    --surface: #1d1a17;
+    --ink: #eeeae4;
+    --muted: #a39d95;
+    --line: #34302b;
+    --accent: #f0743a;
+    --accent-ink: #1a0d06;
+    --accent-soft: #2e1c12;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+}
+
+@layer base {
+  body { @apply bg-paper text-ink antialiased; }
+  a { @apply transition-colors; }
+  ::selection { background: var(--accent-soft); }
+  input[type="checkbox"] { accent-color: var(--accent); @apply size-4; }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8; }
+
+  .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold whitespace-nowrap transition
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+  .btn-primary { @apply bg-accent text-accent-ink hover:brightness-110; }
+  .btn-secondary { @apply border border-line bg-surface text-ink hover:border-muted; }
+  .btn-ghost { @apply text-muted hover:bg-line/50 hover:text-ink; }
+  .btn-danger { @apply bg-red-600 text-white hover:bg-red-700; }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  [aria-busy="true"] { @apply cursor-wait opacity-60; }
+  [aria-busy="true"]::before {
+    content: ""; @apply size-3.5 animate-spin rounded-full border-2 border-current border-r-transparent;
+  }
+
+  .field { @apply mb-5; }
+  .field > label { @apply mb-1.5 block text-sm font-medium; }
+  .field input:not([type="checkbox"]), .field select, .field textarea, .input {
+    @apply block w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink shadow-xs outline-none transition
+      placeholder:text-muted/70 focus:border-accent focus:ring-3 focus:ring-accent/20;
+  }
+  .field select[multiple] { @apply min-h-40 py-1; }
+  .field select[multiple] option { @apply rounded px-2 py-1; }
+  .field select[multiple] option:checked { background: var(--accent-soft); color: var(--ink); }
+  .field textarea { @apply min-h-24; }
+  .field [aria-invalid="true"] { @apply border-red-500 focus:ring-red-500/20; }
+  .help { @apply mt-1.5 block text-xs text-muted; }
+  .error { @apply mt-1.5 block text-sm text-red-600; }
+
+  .chip, .chip-tag, .chip-plain { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition; }
+  .chip-tag { @apply bg-accent-soft text-accent hover:bg-accent hover:text-accent-ink; }
+  .chip-plain { @apply border border-line text-muted hover:border-muted hover:text-ink; }
+
+  .eyebrow { @apply text-xs font-semibold tracking-[0.14em] text-accent uppercase; }
+  .prose-link { @apply underline decoration-line underline-offset-3 hover:text-accent hover:decoration-accent; }
+}

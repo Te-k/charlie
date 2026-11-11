@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load social_tags %}
+{% block title %}{{ article.display_title }}{% endblock %}
+{% block content %}
+<article class="mx-auto max-w-3xl">
+  <a href="{% url 'articles:home' %}" class="text-sm text-muted hover:text-ink">← All articles</a>
+  <p class="eyebrow mt-6 mb-3">{{ article.domain }}</p>
+  <h1 class="font-serif text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">{{ article.display_title }}</h1>
+  <p class="mt-4 text-sm text-muted">
+    Added {{ article.created_at|date:"F j, Y \a\t H:i" }}{% if article.added_by %} by {{ article.added_by.get_username }}{% endif %}
+  </p>
+
+  {% if article.image_url %}
+    <img src="{{ article.image_url }}" alt="" referrerpolicy="no-referrer"
+         class="mt-8 aspect-[1.91/1] w-full rounded-2xl border border-line bg-line object-cover" data-fallback="remove">
+  {% endif %}
+
+  {% if article.description %}
+    <p class="mt-8 font-serif text-xl leading-relaxed">{{ article.description|linebreaksbr }}</p>
+  {% endif %}
+
+  <div class="mt-8">{% include "articles/_relations.html" %}</div>
+
+  <div class="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
+    <a href="{{ article.url }}" rel="noopener noreferrer" target="_blank" class="btn-primary">Read the article <svg class="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'articles:article_edit' article.pk %}" class="btn-secondary">Edit</a>
+      <a href="{% url 'articles:article_delete' article.pk %}" class="btn-ghost hover:!text-red-600">Delete</a>
+    {% endif %}
+  </div>
+  <p class="mt-3 text-xs break-all text-muted">{{ article.url }}</p>
+
+  {% article_social article %}
+</article>
+{% endblock %}

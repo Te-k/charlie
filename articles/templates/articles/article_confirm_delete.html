@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Delete article{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-lg card">
+  <h1 class="font-serif text-2xl font-bold">Delete this article?</h1>
+  <p class="mt-3 text-muted">“{{ object.display_title }}” will be removed permanently. Posts already published on Mastodon or Bluesky are not deleted.</p>
+  <form method="post" class="mt-6 flex gap-3">
+    {% csrf_token %}
+    <button type="submit" class="btn-danger">Delete</button>
+    <a href="{{ object.get_absolute_url }}" class="btn-ghost">Cancel</a>
+  </form>
+</div>
+{% endblock %}

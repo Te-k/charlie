@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<header class="mb-8 border-b-2 border-ink pb-6">
+  <p class="eyebrow mb-2">Settings</p>
+  <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">Settings</h1>
+</header>
+
+<form method="post" novalidate class="space-y-8">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+
+  <section class="card">
+    <h2 class="mb-6 font-serif text-2xl font-bold">General</h2>
+    <div class="max-w-md">
+      {% for field in site_form %}{% include "articles/_form_field.html" %}{% endfor %}
+    </div>
+  </section>
+
+  <div class="pt-4">
+    <h2 class="font-serif text-3xl font-bold tracking-tight">Mastodon &amp; Bluesky</h2>
+    <p class="mt-2 max-w-2xl text-muted">
+      When these accounts are set up, the “Add an article” form shows a checkbox to post the new article on each network.
+      You can also post an existing article from its page.
+    </p>
+  </div>
+
+  {% include "social/_network_section.html" with label="Mastodon" code="mastodon" fields=form.mastodon_fields ready=object.mastodon_ready preview=previews.mastodon %}
+  {% include "social/_network_section.html" with label="Bluesky" code="bluesky" fields=form.bluesky_fields ready=object.bluesky_ready preview=previews.bluesky %}
+
+  <section class="card">
+    <h2 class="font-serif text-xl font-semibold">Placeholders</h2>
+    <p class="mt-2 text-sm text-muted">
+      Use these placeholders in the message formats above. If the message is too long, the description is shortened first, then the title.
+      The preview uses {% if preview_article.pk %}the latest article, “{{ preview_article.display_title }}”{% else %}an example article{% endif %}, and updates when you save.
+    </p>
+    <dl class="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+      {% for name, help in placeholders.items %}
+        <div class="flex gap-3"><dt><code class="rounded bg-accent-soft px-1.5 py-0.5 text-xs text-accent">{{ "{" }}{{ name }}{{ "}" }}</code></dt><dd class="text-muted">{{ help }}</dd></div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <div class="sticky bottom-0 -mx-4 flex gap-3 border-t border-line bg-paper/90 px-4 py-4 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
+    <button type="submit" name="action" value="save" class="btn-primary">Save settings</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load articles_tags %}
+{% block title %}{% if filter_object %}{{ filter_object }}{% else %}Latest articles{% endif %}{% endblock %}
+{% block extra_head %}{% if feed_url %}<link rel="alternate" type="application/rss+xml" title="{{ site_name }} – {{ filter_object }}" href="{{ feed_url }}">{% endif %}{% endblock %}
+{% block content %}
+<header class="mb-10 flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-6">
+  <div>
+    {% if filter_object %}
+      <p class="eyebrow mb-2">{% if filter_kind == "tag" %}Tag{% elif filter_kind == "country" %}Country{% else %}Organization{% endif %}</p>
+      <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">
+        {% if filter_kind == "tag" %}<span class="text-accent">#</span>{{ filter_object.name }}
+        {% elif filter_kind == "country" %}{{ filter_object.flag }} {{ filter_object.name }}
+        {% else %}{{ filter_object.name }}{% endif %}
+      </h1>
+      {% if filter_kind == "organization" and filter_object.website %}
+        <a href="{{ filter_object.website }}" rel="noopener noreferrer" class="prose-link mt-2 inline-block text-sm text-muted">{{ filter_object.website }}</a>
+      {% endif %}
+    {% else %}
+      <p class="eyebrow mb-2">Reading list</p>
+      <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">Latest articles</h1>
+    {% endif %}
+  </div>
+  <div class="flex items-center gap-3 text-sm text-muted">
+    <span>{{ paginator.count }} article{{ paginator.count|pluralize }}</span>
+    {% if feed_url %}<a href="{{ feed_url }}" class="btn-secondary btn-sm">RSS feed</a>{% endif %}
+  </div>
+</header>
+
+{% regroup articles by created_at.date as days %}
+{% for day in days %}
+  <section class="grid gap-x-8 gap-y-3 border-b border-line pb-4 last:border-0 sm:grid-cols-[9rem_1fr] [&:not(:first-child)]:pt-8">
+    <h2 class="text-sm font-semibold sm:sticky sm:top-20 sm:self-start">
+      {{ day.list.0.created_at|day_label }}
+      {% if day.list.0.created_at|is_relative_day %}
+        <span class="block font-normal text-muted">{{ day.list.0.created_at|date:"M j, Y" }}</span>
+      {% endif %}
+    </h2>
+    <div class="divide-y divide-line">
+      {% for article in day.list %}{% include "articles/_article_card.html" %}{% endfor %}
+    </div>
+  </section>
+{% empty %}
+  <div class="rounded-2xl border border-dashed border-line px-6 py-16 text-center">
+    <p class="font-serif text-2xl">Nothing here yet.</p>
+    {% if user.is_authenticated %}
+      <a href="{% url 'articles:article_add' %}" class="btn-primary mt-5">Add the first article</a>
+    {% else %}
+      <p class="mt-2 text-muted">Articles will show up here once they are added.</p>
+    {% endif %}
+  </div>
+{% endfor %}
+
+{% include "articles/_pagination.html" %}
+{% endblock %}

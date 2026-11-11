@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit article{% else %}Add an article{% endif %}{% endblock %}
+{% block content %}
+<div class="mb-8">
+  {% if not object %}<p class="eyebrow mb-2">Step 2 of 2</p>{% endif %}
+  <h1 class="font-serif text-4xl font-bold tracking-tight">{% if object %}Edit article{% else %}Check the details{% endif %}</h1>
+  {% if not object %}<p class="mt-3 text-muted">Here is what was found on the page. Fix anything that looks wrong, then save.</p>{% endif %}
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="error mb-6">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+
+  <div class="grid gap-6 lg:grid-cols-[1fr_20rem]">
+    <section class="card">
+      {% include "articles/_form_field.html" with field=form.url %}
+      <div class="-mt-2 mb-6 flex flex-wrap items-center gap-3">
+        <button type="submit" name="action" value="fetch" class="btn-secondary btn-sm" data-busy>↻ Fetch details again</button>
+        <span class="text-xs text-muted">Replaces the title, description and photo with what is on the page. Nothing is saved yet.</span>
+      </div>
+      {% include "articles/_form_field.html" with field=form.title %}
+      {% include "articles/_form_field.html" with field=form.description %}
+      {% include "articles/_form_field.html" with field=form.image_url %}
+    </section>
+
+    <aside class="space-y-6">
+      <div class="card !p-4">
+        <p class="mb-3 text-xs font-semibold tracking-wide text-muted uppercase">Preview</p>
+        {% with img=form.image_url.value %}
+          {% if img %}
+            <img src="{{ img }}" alt="Photo preview" referrerpolicy="no-referrer" class="aspect-[1.91/1] w-full rounded-lg border border-line bg-line object-cover" data-fallback="message">
+          {% else %}
+            <div class="grid aspect-[1.91/1] place-items-center rounded-lg border border-dashed border-line text-sm text-muted">No photo</div>
+          {% endif %}
+        {% endwith %}
+        <p class="mt-3 font-serif text-lg leading-snug font-semibold">{{ form.title.value|default:"(no title)" }}</p>
+        {% if form.description.value %}<p class="mt-1 line-clamp-4 text-sm text-muted">{{ form.description.value }}</p>{% endif %}
+      </div>
+
+      {% if form.publish_fields %}
+        <div class="card !p-5">
+          <p class="mb-4 text-xs font-semibold tracking-wide text-muted uppercase">Share when saving</p>
+          {% for field in form.publish_fields %}{% include "articles/_form_field.html" %}{% endfor %}
+          <p class="text-xs text-muted">Message formats are set in <a href="{% url 'social:settings' %}" class="prose-link">Settings</a>.</p>
+        </div>
+      {% endif %}
+    </aside>
+  </div>
+
+  <section class="card mt-6">
+    <h2 class="mb-5 font-serif text-xl font-semibold">Topics</h2>
+    <div class="grid gap-x-6 md:grid-cols-3">
+      <div>
+        {% include "articles/_form_field.html" with field=form.tags %}
+        <a href="{% url 'articles:tag_add' %}" class="-mt-3 mb-5 inline-block text-xs font-medium text-accent hover:underline">+ New tag</a>
+      </div>
+      <div>
+        {% include "articles/_form_field.html" with field=form.organizations %}
+        <a href="{% url 'articles:organization_add' %}" class="-mt-3 mb-5 inline-block text-xs font-medium text-accent hover:underline">+ New organization</a>
+      </div>
+      <div>{% include "articles/_form_field.html" with field=form.countries %}</div>
+    </div>
+  </section>
+
+  <div class="sticky bottom-0 -mx-4 mt-6 flex gap-3 border-t border-line bg-paper/90 px-4 py-4 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
+    <button type="submit" name="action" value="save" class="btn-primary">Save article</button>
+    <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'articles:home' %}{% endif %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}
