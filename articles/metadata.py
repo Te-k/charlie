@@ -1,8 +1,12 @@
 """Fetch title / description / image of a web page (OpenGraph, Twitter cards, HTML)."""
 
 import contextlib
+import datetime
+import email.utils
 import ipaddress
+import json
 import logging
+import re
 import socket
 from urllib.parse import urljoin, urlparse
 
@@ -36,6 +40,83 @@ def _meta(soup, *keys):
     return ""
 
 
+PUBLISHED_META_KEYS = (
+    "article:published_time",
+    "og:article:published_time",
+    "datePublished",
+    "citation_publication_date",
+    "citation_date",
+    "DC.date.issued",
+    "dcterms.issued",
+    "dcterms.created",
+    "parsely-pub-date",
+    "sailthru.date",
+    "publish-date",
+    "publishdate",
+    "pubdate",
+    "date",
+)
+
+
+def parse_date(value):
+    """Turn a date string found in a page into a `date`, or None.
+
+    Accepts ISO 8601 (with or without time / timezone), YYYY/MM/DD and RFC 2822.
+    The date is kept in the page's own timezone. Implausible dates are ignored.
+    """
+    value = (value or "").strip()
+    if not value:
+        return None
+    parsed = None
+    with contextlib.suppress(ValueError):
+        parsed = datetime.datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+    if parsed is None:
+        match = re.match(r"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b", value)
+        if match:
+            with contextlib.suppress(ValueError):
+                parsed = datetime.date(*map(int, match.groups()))
+    if parsed is None:
+        with contextlib.suppress(TypeError, ValueError, IndexError):
+            parsed = email.utils.parsedate_to_datetime(value).date()
+    if parsed is None:
+        return None
+    if not datetime.date(1990, 1, 1) <= parsed <= datetime.date.today() + datetime.timedelta(1):
+        return None
+    return parsed
+
+
+def _json_ld_dates(data):
+    """Yield every datePublished value in JSON-LD data (objects, lists, @graph)."""
+    if isinstance(data, list):
+        for item in data:
+            yield from _json_ld_dates(item)
+    elif isinstance(data, dict):
+        if isinstance(data.get("datePublished"), str):
+            yield data["datePublished"]
+        for key in ("@graph", "mainEntity", "mainEntityOfPage"):
+            if key in data:
+                yield from _json_ld_dates(data[key])
+
+
+def _published_date(soup):
+    candidates = [_meta(soup, key) for key in PUBLISHED_META_KEYS[:3]]
+    for script in soup.find_all("script", type="application/ld+json"):
+        with contextlib.suppress(ValueError):
+            candidates.extend(_json_ld_dates(json.loads(script.string or "")))
+    tag = soup.find("meta", itemprop="datePublished")
+    if tag:
+        candidates.append(tag.get("content", ""))
+    for time in soup.find_all("time", attrs={"datetime": True}):
+        if time.get("itemprop") == "datePublished" or time.has_attr("pubdate"):
+            candidates.append(time["datetime"])
+    candidates += [_meta(soup, key) for key in PUBLISHED_META_KEYS[3:]]
+    for value in candidates:
+        parsed = parse_date(value)
+        if parsed:
+            return parsed
+    return None
+
+
 def parse_metadata(html, base_url):
     soup = BeautifulSoup(html, "html.parser")
 
@@ -55,12 +136,14 @@ def parse_metadata(html, base_url):
             image = ""
 
     site_name = _meta(soup, "og:site_name", "application-name")
+    published = _published_date(soup)
 
     return {
         "title": title,
         "description": description,
         "image_url": image,
         "site_name": site_name,
+        "published_on": published.isoformat() if published else "",
     }
 
 
@@ -95,7 +178,10 @@ def _get(url):
 
 
 def fetch_metadata(url):
-    """Return a dict with title, description and image_url (empty dict on failure)."""
+    """Return a dict with title, description, image_url, site_name and published_on.
+
+    Returns an empty dict on failure.
+    """
     try:
         response = _get(url)
         if response is None:

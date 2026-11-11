@@ -16,11 +16,13 @@
       {% include "articles/_form_field.html" with field=form.url %}
       <div class="-mt-2 mb-6 flex flex-wrap items-center gap-3">
         <button type="submit" name="action" value="fetch" class="btn-secondary btn-sm" data-busy>↻ Fetch details again</button>
-        <span class="text-xs text-muted">Replaces the title, description and photo with what is on the page. Nothing is saved yet.</span>
+        <span class="text-xs text-muted">Replaces the title, description, photo and publication date with what is on the page. Nothing is saved yet.</span>
       </div>
       {% include "articles/_form_field.html" with field=form.title %}
       {% include "articles/_form_field.html" with field=form.description %}
       {% include "articles/_form_field.html" with field=form.image_url %}
+      {% include "articles/_form_field.html" with field=form.published_on %}
+      {% if form.created_at %}{% include "articles/_form_field.html" with field=form.created_at %}{% endif %}
       {% include "articles/_form_field.html" with field=form.publisher %}
       {{ form.publisher_name }}
       {% if new_publisher %}<p class="-mt-3 mb-5 text-xs text-muted">No publisher matches this URL yet. Saving creates <strong class="text-ink">{{ new_publisher }}</strong>.</p>{% endif %}

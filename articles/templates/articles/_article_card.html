@@ -2,8 +2,12 @@
   <div class="min-w-0 flex-1">
     <p class="mb-1.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
       {% if article.publisher %}<a href="{{ article.publisher.get_absolute_url }}" class="font-semibold tracking-wide text-ink/80 uppercase hover:text-accent">{{ article.publisher.name }}</a>{% else %}<span class="font-semibold tracking-wide text-ink/80 uppercase">{{ article.domain }}</span>{% endif %}
+      {% if article.published_on %}
+        <span aria-hidden="true">·</span>
+        <time datetime="{{ article.published_on|date:"Y-m-d" }}" title="Publication date">{{ article.published_on|date:"M j, Y" }}</time>
+      {% endif %}
       <span aria-hidden="true">·</span>
-      <a href="{{ article.get_absolute_url }}" class="hover:text-ink" title="{{ article.created_at }}">{{ article.created_at|time:"H:i" }}</a>
+      <a href="{{ article.get_absolute_url }}" class="hover:text-ink" title="Added {{ article.created_at }}">{{ article.created_at|time:"H:i" }}</a>
       {% if user.is_authenticated %}
         <span class="ml-auto flex gap-3 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <a href="{% url 'articles:article_edit' article.pk %}" class="hover:text-ink">Edit</a>

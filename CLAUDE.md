@@ -43,6 +43,9 @@ standalone Tailwind v4 CLI.
     (a single row holding the website name; read it with `site_name()`).
   - `metadata.py`: fetches a page's title, description and image (OpenGraph, then Twitter card,
     then `<title>` / meta description), and downloads images (`fetch_image`).
+    The publication date (`published_on`) comes from `article:published_time`, JSON-LD
+    `datePublished`, `<time>` tags, then generic date meta tags; `parse_date()` rejects
+    implausible dates.
   - `views.py`: list pages, detail page, the two-step add flow, edit, delete, and adding tags and
     organizations.
   - `feeds.py`: RSS feeds (`/feed/`, plus one per tag, organization, publisher and country).
@@ -74,6 +77,9 @@ standalone Tailwind v4 CLI.
    `articles.metadata.fetch_metadata()`, writes the results into a copy of the POST data, and shows
    a **bound** `ArticleForm` in `article_form.html`. Nothing is saved.
 3. POST with `action=save` (or no action) saves normally. Metadata is **never** fetched on save.
+
+The add form uses `ArticleCreateForm`, which adds `created_at` ("Added on", pre-filled with the
+current time by `step_one()`, empty means now, future dates refused). The edit form doesn't offer it.
 
 `/articles/add/?url=…` skips step 1. On the edit form, "Fetch details again" also posts
 `action=fetch`; it overwrites the title, description and image in the form without saving.

@@ -36,5 +36,5 @@ class ArticleAdmin(admin.ModelAdmin):
     list_filter = ["publisher", "tags", "organizations", "created_at"]
     search_fields = ["title", "url", "description"]
     filter_horizontal = ["tags", "countries", "organizations"]
-    readonly_fields = ["created_at", "updated_at"]
+    readonly_fields = ["updated_at"]
     autocomplete_fields = ["publisher"]

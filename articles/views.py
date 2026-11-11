@@ -5,6 +5,7 @@ from django.db.models import Count
 from django.http import HttpResponseRedirect, QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.views.generic import (
     CreateView,
@@ -19,7 +20,15 @@ from social.models import SocialSettings
 from social.views import publish_with_messages
 
 from . import metadata
-from .forms import ArticleForm, ArticleUrlForm, OrganizationForm, PublisherForm, TagForm
+from .forms import (
+    DATETIME_LOCAL,
+    ArticleCreateForm,
+    ArticleForm,
+    ArticleUrlForm,
+    OrganizationForm,
+    PublisherForm,
+    TagForm,
+)
 from .models import Article, Country, Organization, Publisher, Tag, url_domain
 
 
@@ -118,7 +127,7 @@ class ArticleDetailView(DetailView):
         return Article.objects.with_relations()
 
 
-METADATA_FIELDS = ("title", "description", "image_url")
+METADATA_FIELDS = ("title", "description", "image_url", "published_on")
 
 
 class ArticleFormMixin(LoginRequiredMixin):
@@ -220,6 +229,8 @@ class ArticleCreateView(ArticleFormMixin, CreateView):
             return self.step_one(ArticleUrlForm(request.POST))
         return super().post(request, *args, **kwargs)
 
+    form_class = ArticleCreateForm
+
     def extend_form(self, form):
         add_publish_fields(form, self.social_config)
 
@@ -237,6 +248,7 @@ class ArticleCreateView(ArticleFormMixin, CreateView):
         if url_form.is_bound and url_form.is_valid():
             data = QueryDict(mutable=True)
             data["url"] = url_form.cleaned_data["url"]
+            data["created_at"] = timezone.localtime().strftime(DATETIME_LOCAL)
             # Pre-check the "Post on …" boxes according to the settings.
             for network in self.social_config.ready_networks():
                 if getattr(self.social_config, f"{network}_default"):

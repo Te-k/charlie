@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
 
 
@@ -168,6 +169,7 @@ class Article(models.Model):
     title = models.CharField(max_length=500, blank=True)
     description = models.TextField(blank=True)
     image_url = models.URLField(max_length=2000, blank=True)
+    published_on = models.DateField("Publication date", null=True, blank=True)
     publisher = models.ForeignKey(
         Publisher,
         on_delete=models.SET_NULL,
@@ -186,7 +188,7 @@ class Article(models.Model):
         blank=True,
         related_name="articles",
     )
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField("Added on", default=timezone.now, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = ArticleQuerySet.as_manager()

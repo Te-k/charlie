@@ -3,6 +3,7 @@ from unittest import mock
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from articles.models import Article, Country, Organization, Tag
 
@@ -10,6 +11,7 @@ META = {
     "title": "Fetched title",
     "description": "Fetched desc",
     "image_url": "https://example.com/a.png",
+    "published_on": "2026-11-02",
 }
 
 
@@ -92,6 +94,7 @@ class ViewTests(TestCase):
         self.assertContains(response, 'value="Fetched title"')
         self.assertContains(response, "Fetched desc")
         self.assertContains(response, 'src="https://example.com/a.png"')
+        self.assertContains(response, 'value="2026-11-02"')
 
         # The user corrects the title and saves.
         response = self.client.post(
@@ -102,6 +105,7 @@ class ViewTests(TestCase):
                 "title": "Corrected title",
                 "description": "Fetched desc",
                 "image_url": "https://example.com/a.png",
+                "published_on": "2026-11-01",
                 "tags": [self.tag.pk],
                 "countries": [self.france.pk],
             },
@@ -111,6 +115,11 @@ class ViewTests(TestCase):
         self.assertEqual(fetch.call_count, 1)  # no fetch on save
         self.assertEqual(article.title, "Corrected title")
         self.assertEqual(article.image_url, "https://example.com/a.png")
+        self.assertEqual(str(article.published_on), "2026-11-01")  # corrected by the user
+        self.assertContains(
+            self.client.get(article.get_absolute_url()), "Published November 1, 2026"
+        )
+        self.assertContains(self.client.get(reverse("articles:home")), "Nov 1, 2026")
         self.assertEqual(article.added_by, self.user)
         self.assertEqual(list(article.tags.all()), [self.tag])
         self.assertEqual(list(article.countries.all()), [self.france])
@@ -225,6 +234,36 @@ class ViewTests(TestCase):
         ):
             response = self.client.get(old)
             self.assertRedirects(response, new, status_code=301, fetch_redirect_response=False)
+
+    @mock.patch("articles.metadata.fetch_metadata", return_value=META)
+    def test_added_date_can_be_set_when_adding(self, fetch):
+        self.client.force_login(self.user)
+        add_url = reverse("articles:article_add")
+        response = self.client.post(add_url, {"action": "fetch", "url": "https://example.com/d"})
+        self.assertContains(response, 'type="datetime-local"')
+        self.assertTrue(response.context["form"]["created_at"].value())  # pre-filled with now
+
+        save = {"action": "save", "url": "https://example.com/d", "title": "D"}
+        response = self.client.post(add_url, {**save, "created_at": "2099-01-01T10:00"})
+        self.assertContains(response, "can&#x27;t be in the future")
+        self.assertFalse(Article.objects.exists())
+
+        self.client.post(add_url, {**save, "created_at": "2025-03-04T10:30"})
+        article = Article.objects.get()
+        self.assertEqual(article.created_at.isoformat(), "2025-03-04T10:30:00+00:00")
+
+        # Not offered on the edit form.
+        response = self.client.get(reverse("articles:article_edit", args=[article.pk]))
+        self.assertNotContains(response, 'type="datetime-local"')
+
+    def test_added_date_defaults_to_now(self):
+        self.client.force_login(self.user)
+        self.client.post(
+            reverse("articles:article_add"),
+            {"action": "save", "url": "https://example.com/e", "title": "E", "created_at": ""},
+        )
+        article = Article.objects.get()
+        self.assertLess((timezone.now() - article.created_at).total_seconds(), 60)
 
     def test_detail_page_archive_links(self):
         article = Article.objects.create(url="https://example.com/a?b=1", title="A")
