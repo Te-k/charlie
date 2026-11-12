@@ -2,7 +2,16 @@ from django import forms
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import Article, Organization, Publisher, SiteSettings, Tag, url_domain
+from .models import (
+    ALL_LANGUAGES,
+    Article,
+    Organization,
+    Publisher,
+    SiteSettings,
+    Tag,
+    language_name,
+    url_domain,
+)
 
 
 class ArticleUrlForm(forms.Form):
@@ -36,6 +45,7 @@ class ArticleForm(forms.ModelForm):
             "description",
             "image_url",
             "published_on",
+            "language",
             "publisher",
             "tags",
             "countries",
@@ -55,6 +65,23 @@ class ArticleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for name in ("tags", "countries", "organizations"):
             self.fields[name].help_text = "Ctrl/⌘-click to select several."
+        # Languages come from the Settings page. Keep the article's current language
+        # selectable even if it has since been removed from the list.
+        site = SiteSettings.load()
+        self.default_language = site.default_language
+        choices = site.language_choices()
+        current = self.instance.language if self.instance.pk else None
+        if current and current not in dict(choices):
+            choices.append((current, language_name(current)))
+        self.fields["language"] = forms.ChoiceField(
+            label="Language",
+            choices=choices,
+            required=False,
+            initial=current or site.default_language,
+        )
+
+    def clean_language(self):
+        return self.cleaned_data.get("language") or self.default_language
 
     def publish_fields(self):
         return [self[name] for name in self.fields if name.startswith("post_")]
@@ -131,6 +158,23 @@ class PublisherForm(forms.ModelForm):
 
 
 class SiteSettingsForm(forms.ModelForm):
+    languages = forms.MultipleChoiceField(
+        label="Article languages",
+        choices=ALL_LANGUAGES,
+        widget=forms.SelectMultiple(attrs={"size": 10}),
+        help_text="Languages you can choose from for an article. Ctrl/⌘-click to select several.",
+    )
+
     class Meta:
         model = SiteSettings
-        fields = ["site_name"]
+        fields = ["site_name", "languages", "default_language"]
+        help_texts = {"default_language": "Used for new articles."}
+
+    def clean(self):
+        cleaned = super().clean()
+        languages, default = cleaned.get("languages"), cleaned.get("default_language")
+        if languages and default and default not in languages:
+            self.add_error(
+                "default_language", "The default language must be one of the article languages."
+            )
+        return cleaned

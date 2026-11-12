@@ -29,7 +29,7 @@ from .forms import (
     PublisherForm,
     TagForm,
 )
-from .models import Article, Country, Organization, Publisher, Tag, url_domain
+from .models import Article, Country, Organization, Publisher, SiteSettings, Tag, url_domain
 
 
 class ArticleListView(ListView):
@@ -249,6 +249,7 @@ class ArticleCreateView(ArticleFormMixin, CreateView):
             data = QueryDict(mutable=True)
             data["url"] = url_form.cleaned_data["url"]
             data["created_at"] = timezone.localtime().strftime(DATETIME_LOCAL)
+            data["language"] = SiteSettings.load().default_language
             # Pre-check the "Post on …" boxes according to the settings.
             for network in self.social_config.ready_networks():
                 if getattr(self.social_config, f"{network}_default"):

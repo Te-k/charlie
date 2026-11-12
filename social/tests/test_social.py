@@ -125,6 +125,8 @@ class SocialTests(TestCase):
             reverse("social:settings"),
             {
                 "site-site_name": "Charlie",
+                "site-languages": ["en"],
+                "site-default_language": "en",
                 "mastodon_enabled": "on",
                 "mastodon_instance": "https://mastodon.example",
                 "mastodon_access_token": "",
@@ -152,6 +154,8 @@ class SocialTests(TestCase):
             reverse("social:settings"),
             {
                 "site-site_name": "My Reading List",
+                "site-languages": ["en"],
+                "site-default_language": "en",
                 "mastodon_template": "{title}",
                 "bluesky_template": "{title}",
                 "mastodon_visibility": "public",
@@ -178,6 +182,8 @@ class SocialTests(TestCase):
             reverse("social:settings"),
             {
                 "site-site_name": "  ",
+                "site-languages": ["en"],
+                "site-default_language": "en",
                 "mastodon_template": "{title}",
                 "bluesky_template": "{title}",
                 "mastodon_visibility": "public",
@@ -194,6 +200,8 @@ class SocialTests(TestCase):
             reverse("social:settings"),
             {
                 "site-site_name": "Charlie",
+                "site-languages": ["en"],
+                "site-default_language": "en",
                 "bluesky_enabled": "on",
                 "bluesky_service": "https://bsky.social",
                 "mastodon_template": "x",
@@ -215,6 +223,8 @@ class SocialTests(TestCase):
             reverse("social:settings"),
             {
                 "site-site_name": "Charlie",
+                "site-languages": ["en"],
+                "site-default_language": "en",
                 "action": "test_mastodon",
                 "mastodon_enabled": "on",
                 "mastodon_instance": "https://mastodon.example",

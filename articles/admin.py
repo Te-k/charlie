@@ -33,7 +33,7 @@ class CountryAdmin(admin.ModelAdmin):
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ["display_title", "publisher", "added_by", "created_at"]
-    list_filter = ["publisher", "tags", "organizations", "created_at"]
+    list_filter = ["publisher", "language", "tags", "organizations", "created_at"]
     search_fields = ["title", "url", "description"]
     filter_horizontal = ["tags", "countries", "organizations"]
     readonly_fields = ["updated_at"]

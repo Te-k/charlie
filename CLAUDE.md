@@ -84,6 +84,16 @@ current time by `step_one()`, empty means now, future dates refused). The edit f
 `/articles/add/?url=…` skips step 1. On the edit form, "Fetch details again" also posts
 `action=fetch`; it overwrites the title, description and image in the form without saving.
 
+### Languages
+- `Article.language` is a language code (default `en`). The codes offered come from
+  `SiteSettings.languages` (a JSON list) and `default_language`, edited on the Settings page; the
+  full list is Django's `global_settings.LANGUAGES` (`ALL_LANGUAGES`).
+- `ArticleForm` builds the `language` choices at runtime and keeps an article's current language
+  selectable even after it is removed from the list. Empty means the default.
+- Pages show `article.language_name` and set `lang=` on the title and description. Lists only label
+  articles whose language differs from the default (`default_language` is in every template's
+  context).
+
 ### Publishers (found from the article's domain)
 - `Publisher` has `website` and an optional `alternative_website`. `save()` stores their normalised
   domains (lowercase, no `www.`, see `url_domain()`) in `domain` / `alternative_domain` for lookups.

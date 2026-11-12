@@ -3,6 +3,8 @@
 A small Django + [Tailwind CSS](https://tailwindcss.com/) app to keep track of interesting articles.
 
 - Articles have a URL, title, description, photo, tags, and optionally countries and organizations.
+- Each article has a language (English by default). The languages offered are set on the Settings
+  page.
 - Each article is linked to its publisher, found from the URL's domain. Publishers are created
   automatically and can be given a description and an alternative website.
 - Adding an article takes two steps: paste the URL, and the app fetches the title, description and photo

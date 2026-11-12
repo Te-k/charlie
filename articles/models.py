@@ -1,11 +1,24 @@
 from urllib.parse import urlparse
 
-from django.conf import settings
+from django.conf import global_settings, settings
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+
+# Every language Django knows, sorted by English name: the choices for the Settings page.
+ALL_LANGUAGES = sorted(global_settings.LANGUAGES, key=lambda item: item[1])
+LANGUAGE_NAMES = dict(ALL_LANGUAGES)
+DEFAULT_LANGUAGE = "en"
+
+
+def language_name(code):
+    return LANGUAGE_NAMES.get(code, code)
+
+
+def default_languages():
+    return [DEFAULT_LANGUAGE]
 
 
 def unique_slug(instance, value, max_length=100):
@@ -170,6 +183,7 @@ class Article(models.Model):
     description = models.TextField(blank=True)
     image_url = models.URLField(max_length=2000, blank=True)
     published_on = models.DateField("Publication date", null=True, blank=True)
+    language = models.CharField(max_length=10, default=DEFAULT_LANGUAGE)
     publisher = models.ForeignKey(
         Publisher,
         on_delete=models.SET_NULL,
@@ -218,6 +232,10 @@ class Article(models.Model):
     def domain(self):
         return url_domain(self.url)
 
+    @property
+    def language_name(self):
+        return language_name(self.language)
+
 
 class SiteSettings(models.Model):
     """General website settings (a single row, pk=1)."""
@@ -229,6 +247,14 @@ class SiteSettings(models.Model):
         max_length=100,
         default=DEFAULT_NAME,
         help_text="Shown in the header, browser tabs and RSS feeds.",
+    )
+    languages = models.JSONField(
+        "Article languages",
+        default=default_languages,
+        help_text="Languages you can choose from when adding an article.",
+    )
+    default_language = models.CharField(
+        "Default language", max_length=10, choices=ALL_LANGUAGES, default=DEFAULT_LANGUAGE
     )
 
     class Meta:
@@ -245,6 +271,11 @@ class SiteSettings(models.Model):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+    def language_choices(self):
+        """(code, name) pairs for the article form, sorted by name."""
+        codes = set(self.languages or []) | {self.default_language}
+        return sorted(((c, language_name(c)) for c in codes), key=lambda item: item[1])
 
 
 def site_name():

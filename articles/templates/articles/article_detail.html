@@ -5,9 +5,9 @@
 <article class="mx-auto max-w-3xl">
   <a href="{% url 'articles:home' %}" class="text-sm text-muted hover:text-ink">← All articles</a>
   <p class="eyebrow mt-6 mb-3">{% if article.publisher %}<a href="{{ article.publisher.get_absolute_url }}" class="hover:text-ink">{{ article.publisher.name }}</a>{% else %}{{ article.domain }}{% endif %}</p>
-  <h1 class="font-serif text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">{{ article.display_title }}</h1>
+  <h1 lang="{{ article.language }}" class="font-serif text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">{{ article.display_title }}</h1>
   <p class="mt-4 text-sm text-muted">
-    {% if article.published_on %}Published {{ article.published_on|date:"F j, Y" }} · {% endif %}Added {{ article.created_at|date:"F j, Y \a\t H:i" }}
+    <span class="font-medium text-ink">{{ article.language_name }}</span> · {% if article.published_on %}Published {{ article.published_on|date:"F j, Y" }} · {% endif %}Added {{ article.created_at|date:"F j, Y \a\t H:i" }}
   </p>
 
   {% if article.image_url %}
@@ -16,7 +16,7 @@
   {% endif %}
 
   {% if article.description %}
-    <p class="mt-8 font-serif text-xl leading-relaxed">{{ article.description|linebreaksbr }}</p>
+    <p lang="{{ article.language }}" class="mt-8 font-serif text-xl leading-relaxed">{{ article.description|linebreaksbr }}</p>
   {% endif %}
 
   <div class="mt-8">{% include "articles/_relations.html" %}</div>

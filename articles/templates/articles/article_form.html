@@ -22,6 +22,7 @@
       {% include "articles/_form_field.html" with field=form.description %}
       {% include "articles/_form_field.html" with field=form.image_url %}
       {% include "articles/_form_field.html" with field=form.published_on %}
+      {% include "articles/_form_field.html" with field=form.language %}
       {% if form.created_at %}{% include "articles/_form_field.html" with field=form.created_at %}{% endif %}
       {% include "articles/_form_field.html" with field=form.publisher %}
       {{ form.publisher_name }}

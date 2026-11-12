@@ -1,5 +1,6 @@
-from .models import site_name
+from .models import SiteSettings
 
 
 def site(request):
-    return {"site_name": site_name()}
+    settings = SiteSettings.load()
+    return {"site_name": settings.site_name, "default_language": settings.default_language}
