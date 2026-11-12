@@ -59,10 +59,15 @@ class ViewTests(TestCase):
         a.countries.add(self.france)
         for name in ("tags", "organizations", "countries"):
             self.assertEqual(self.client.get(reverse(f"articles:{name}")).status_code, 200)
+        # Only countries with articles are listed, though all of them exist.
+        self.assertGreater(Country.objects.count(), 200)
         countries = self.client.get(reverse("articles:countries")).context["items"]
-        self.assertEqual(len(countries), Country.objects.count())
-        self.assertGreater(len(countries), 200)
-        self.assertEqual(next(c for c in countries if c == self.france).article_count, 1)
+        self.assertEqual(list(countries), [self.france])
+        self.assertEqual(countries[0].article_count, 1)
+        # The others can still be picked on the article form.
+        self.client.force_login(self.user)
+        form = self.client.get(reverse("articles:article_edit", args=[a.pk])).context["form"]
+        self.assertGreater(form.fields["countries"].queryset.count(), 200)
 
     def test_adding_requires_login(self):
         for name in ("article_add", "tag_add", "organization_add"):

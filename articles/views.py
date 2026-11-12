@@ -116,7 +116,12 @@ class PublisherIndexView(IndexView):
 
 
 class CountryIndexView(IndexView):
+    """Only countries that have articles: listing all 249 would bury them."""
+
     model, title = Country, "Countries"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(article_count__gt=0)
 
 
 class ArticleDetailView(DetailView):
