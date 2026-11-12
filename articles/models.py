@@ -248,6 +248,12 @@ class SiteSettings(models.Model):
         default=DEFAULT_NAME,
         help_text="Shown in the header, browser tabs and RSS feeds.",
     )
+    site_description = models.TextField(
+        "Website description",
+        blank=True,
+        help_text="Shown at the top of the home page, and used as the description of the site "
+        "for search engines and the RSS feed.",
+    )
     languages = models.JSONField(
         "Article languages",
         default=default_languages,

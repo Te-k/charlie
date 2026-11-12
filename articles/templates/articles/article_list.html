@@ -26,6 +26,7 @@
     {% else %}
       <p class="eyebrow mb-2">Reading list</p>
       <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">Latest articles</h1>
+      {% if site_description %}<p class="mt-3 max-w-2xl text-lg leading-relaxed text-muted">{{ site_description|urlize|linebreaksbr }}</p>{% endif %}
     {% endif %}
   </div>
   <div class="flex items-center gap-3 text-sm text-muted">

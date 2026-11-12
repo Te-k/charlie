@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
+  {% if site_description %}<meta name="description" content="{{ site_description }}">{% endif %}
   <title>{% block title %}Articles{% endblock %} · {{ site_name }}</title>
   <link rel="stylesheet" href="{% static 'articles/app.css' %}">
   <script src="{% static 'articles/app.js' %}"></script>

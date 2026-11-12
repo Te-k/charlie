@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.feedgenerator import Rss201rev2Feed
 
-from .models import Article, Country, Organization, Publisher, Tag, site_name
+from .models import Article, Country, Organization, Publisher, SiteSettings, Tag, site_name
 
 FEED_SIZE = 50
 
@@ -17,7 +17,8 @@ class LatestArticlesFeed(Feed):
     def title(self, obj=None):
         return f"{site_name()} – latest articles"
 
-    description = "Interesting articles, newest first."
+    def description(self, obj=None):
+        return SiteSettings.load().site_description or "Interesting articles, newest first."
 
     def link(self, obj=None):
         return reverse("articles:home")

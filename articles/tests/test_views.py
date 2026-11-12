@@ -5,7 +5,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from articles.models import Article, Country, Organization, Tag
+from articles.models import Article, Country, Organization, SiteSettings, Tag
 
 META = {
     "title": "Fetched title",
@@ -269,6 +269,22 @@ class ViewTests(TestCase):
         )
         article = Article.objects.get()
         self.assertLess((timezone.now() - article.created_at).total_seconds(), 60)
+
+    def test_site_description(self):
+        home = reverse("articles:home")
+        self.assertNotContains(self.client.get(home), 'name="description"')
+        site = SiteSettings.load()
+        site.site_description = "Articles about <AI> & privacy.\nSee https://example.org"
+        site.save()
+        response = self.client.get(home)
+        self.assertContains(response, "Articles about &lt;AI&gt; &amp; privacy.<br>")
+        self.assertContains(response, '<a href="https://example.org"')
+        self.assertContains(response, '<meta name="description" content="Articles about')
+        self.assertContains(self.client.get(reverse("articles:feed")), "Articles about &lt;AI&gt;")
+        # Only on the home page, not on filtered lists.
+        self.assertNotContains(
+            self.client.get(reverse("articles:tag", args=["machine-learning"])), "<br>See"
+        )
 
     def test_detail_page_archive_links(self):
         article = Article.objects.create(url="https://example.com/a?b=1", title="A")

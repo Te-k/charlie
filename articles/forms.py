@@ -167,7 +167,8 @@ class SiteSettingsForm(forms.ModelForm):
 
     class Meta:
         model = SiteSettings
-        fields = ["site_name", "languages", "default_language"]
+        fields = ["site_name", "site_description", "languages", "default_language"]
+        widgets = {"site_description": forms.Textarea(attrs={"rows": 3})}
         help_texts = {"default_language": "Used for new articles."}
 
     def clean(self):

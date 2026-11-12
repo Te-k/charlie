@@ -40,7 +40,8 @@ standalone Tailwind v4 CLI.
 - `articles/`: the main app.
   - `models.py`: `Article`, plus `Tag`, `Organization` and `Publisher` (all use `SluggedModel`,
     which builds a unique slug automatically), `Country` (ISO code, `flag` emoji property), and `SiteSettings`
-    (a single row holding the website name; read it with `site_name()`).
+    (a single row: website name and description, article languages; read the name with
+    `site_name()`).
   - `metadata.py`: fetches a page's title, description and image (OpenGraph, then Twitter card,
     then `<title>` / meta description), and downloads images (`fetch_image`).
     The publication date (`published_on`) comes from `article:published_time`, JSON-LD
