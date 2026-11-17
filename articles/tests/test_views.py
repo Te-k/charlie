@@ -227,6 +227,32 @@ class ViewTests(TestCase):
         ):
             self.assertEqual(self.client.get(url).status_code, 200, url)
 
+    @override_settings(ARTICLES_PER_PAGE=2)
+    def test_country_page_tag_filter(self):
+        other_tag = Tag.objects.create(name="Unused here")
+        a, b, c, d = self.make_articles(4)
+        for article in (a, b, c, d):
+            article.countries.add(self.france)
+        for article in (a, b, c):
+            article.tags.add(self.tag)
+        Article.objects.create(url="https://example.com/de").tags.add(other_tag)
+        url = reverse("articles:country", args=["fr"])
+
+        response = self.client.get(url)
+        self.assertEqual(response.context["paginator"].count, 4)
+        self.assertEqual(list(response.context["filter_tags"]), [self.tag])  # only tags used here
+        self.assertEqual(response.context["filter_tags"][0].article_count, 3)
+
+        response = self.client.get(url + "?tag=machine-learning")
+        self.assertEqual(response.context["paginator"].count, 3)
+        self.assertEqual(response.context["active_tag"], self.tag)
+        self.assertContains(response, 'href="?tag=machine-learning&amp;page=2"')  # kept when paging
+
+        # An unknown tag shows everything.
+        response = self.client.get(url + "?tag=nope")
+        self.assertEqual(response.context["paginator"].count, 4)
+        self.assertIsNone(response.context["active_tag"])
+
     def test_old_company_urls_redirect(self):
         for old, new in (
             ("/companies/", reverse("articles:organizations")),

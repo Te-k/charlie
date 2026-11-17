@@ -156,6 +156,9 @@ addresses. Every outgoing request for a user-supplied URL (pages, images) must g
 - **Views**: class-based. List pages filtered by tag, organization, publisher or country share
   `FilteredArticleListView` (`model`, `relation`, `kind`, `lookup`); feeds mirror this with
   `_FilteredFeed`. Countries are looked up by lowercase ISO code in URLs and stored uppercase.
+  `CountryArticlesView` also lists the tags used by that country's articles and filters with
+  `?tag=<slug>` (unknown slugs are ignored). Pagination links use `{% querystring %}` so filters
+  survive paging.
 - **Single-row settings** (`SiteSettings`, `SocialSettings`): `save()` forces `pk=1`; read with
   `.load()`. Add new site-wide options as fields on these models and to the Settings page, rather
   than as new settings models or entries in `settings.py`.

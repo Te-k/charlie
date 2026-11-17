@@ -1,7 +1,7 @@
 {% if is_paginated %}
 <nav class="mt-10 flex items-center justify-between gap-4 border-t border-line pt-6" aria-label="Pagination">
-  <div>{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" rel="prev" class="btn-secondary">← Newer</a>{% endif %}</div>
+  <div>{% if page_obj.has_previous %}<a href="{% querystring page=page_obj.previous_page_number %}" rel="prev" class="btn-secondary">← Newer</a>{% endif %}</div>
   <p class="text-sm text-muted">Page {{ page_obj.number }} of {{ paginator.num_pages }}</p>
-  <div>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" rel="next" class="btn-secondary">Older →</a>{% endif %}</div>
+  <div>{% if page_obj.has_next %}<a href="{% querystring page=page_obj.next_page_number %}" rel="next" class="btn-secondary">Older →</a>{% endif %}</div>
 </nav>
 {% endif %}

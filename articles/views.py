@@ -37,7 +37,9 @@ class ArticleListView(ListView):
 
     template_name = "articles/article_list.html"
     context_object_name = "articles"
-    paginate_by = settings.ARTICLES_PER_PAGE
+
+    def get_paginate_by(self, queryset):
+        return settings.ARTICLES_PER_PAGE
 
     def get_queryset(self):
         return Article.objects.with_relations()
@@ -82,7 +84,29 @@ class PublisherArticlesView(FilteredArticleListView):
 
 
 class CountryArticlesView(FilteredArticleListView):
+    """Articles about a country, optionally narrowed to one tag with ``?tag=<slug>``."""
+
     model, relation, kind, lookup = Country, "countries", "country", "code"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Tags used by this country's articles, most used first.
+        self.tags = (
+            Tag.objects.filter(articles__countries=self.object)
+            .annotate(article_count=Count("articles"))
+            .order_by("-article_count", "name")
+        )
+        slug = self.request.GET.get("tag")
+        self.active_tag = next((t for t in self.tags if t.slug == slug), None) if slug else None
+        if self.active_tag:
+            queryset = queryset.filter(tags=self.active_tag)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["filter_tags"] = self.tags
+        context["active_tag"] = self.active_tag
+        return context
 
 
 class IndexView(ListView):
